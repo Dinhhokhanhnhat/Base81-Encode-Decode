@@ -1,0 +1,1044 @@
+<!-- Base81 by Lykke Månestrand. -->
+<!-- Please do not redistribute. -->
+<!-- Read the attached EULA.html (EULA_EN or EULA_VN) before using. -->
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Base81 Encoder and Decoder.</title>
+<style>
+:root {
+  --bg: #0f1115;
+  --card: #1a1d24;
+  --border: #2a2e38;
+  --text: #e6e8ec;
+  --muted: #9aa0ab;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --radius: 12px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+}
+[data-theme="light"] {
+  --bg: #f4f5f7;
+  --card: #ffffff;
+  --border: #e2e5eb;
+  --text: #1a1d24;
+  --muted: #5c6370;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 24px 16px 48px;
+  line-height: 1.5;
+}
+.container { max-width: 860px; margin: 0 auto; }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(
+    90deg,
+    #ff5555,
+    #ffaa00,
+    #ffff55,
+    #55ff55,
+    #55ffff,
+    #5555ff,
+    #ff55ff,
+    #ff5555
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbow-move 7s linear infinite;
+}
+@keyframes rainbow-move {
+  to { background-position: 200% center; }
+}
+.theme-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  transition: 0.15s;
+}
+.theme-btn:hover { border-color: var(--accent); }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 20px;
+}
+.card h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+label { font-size: 0.9rem; color: var(--muted); display: block; margin-bottom: 6px; }
+select, textarea, input[type="file"] {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+select:focus, textarea:focus { border-color: var(--accent); }
+textarea {
+  font-family: var(--mono);
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.45;
+}
+.row { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--border); }
+.btn-danger:hover { border-color: var(--danger); }
+.progress-wrap { margin-top: 12px; display: none; }
+.progress-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.progress-bar > div {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.2s;
+}
+.status { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--muted);
+  transition: 0.15s;
+  cursor: pointer;
+}
+.drop-zone.dragover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--accent);
+}
+.drop-zone p { margin-top: 6px; font-size: 0.9rem; }
+.file-info { font-size: 0.88rem; color: var(--muted); margin-top: 10px; }
+.meta { font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 18px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: 0.25s;
+  z-index: 99;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.gc-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  color: white;
+  font-size: 1.3rem;
+  cursor: grab;
+  box-shadow: 0 4px 12px rgba(255, 85, 85, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  user-select: none;
+  isolation: isolate;
+  background: linear-gradient(
+    90deg,
+    #ff5555,
+    #ffaa00,
+    #ffff55,
+    #55ff55,
+    #55ffff,
+    #5555ff,
+    #ff55ff,
+    #ff5555
+  );
+  background-size: 200% auto;
+  animation: rainbow-move 10s linear infinite;
+}
+.gc-btn::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: linear-gradient(
+    90deg,
+    #ff5555,
+    #ffaa00,
+    #ffff55,
+    #55ff55,
+    #55ffff,
+    #5555ff,
+    #ff55ff,
+    #ff5555
+  );
+  background-size: 200% auto;
+  animation: rainbow-move 10s linear infinite;
+  z-index: -1;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  padding: 3px;
+}
+@keyframes rainbow-move {
+  to { background-position: 200% center; }
+}
+.gc-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(255, 85, 85, 0.6);
+  cursor: grab;
+}
+.gc-btn:active {
+  cursor: grabbing;
+}
+.gc-btn.dragging {
+  opacity: 0.9;
+  box-shadow: 0 8px 20px rgba(255, 85, 85, 0.8);
+}
+@media (max-width: 600px) {
+  .row button { flex: 1; }
+  .gc-btn {
+    width: 45px;
+    height: 45px;
+    font-size: 1.1rem;
+  }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Base81 by Lykke Månestrand.</h1>
+    <button class="theme-btn" id="themeBtn" title="Change display mode.">☀</button>
+  </header>
+  <div class="card">
+    <h2>Text Mode.</h2>
+    <label>Encoding.</label>
+    <select id="encoding">
+      <option value="1">UTF-8.</option>
+      <option value="2">ASCII.</option>
+      <option value="3">UTF-16 LE.</option>
+      <option value="4">UTF-32 LE.</option>
+      <option value="6">UTF-16 BE.</option>
+      <option value="7">UTF-32 BE.</option>
+      <option value="8">Windows-1252.</option>
+      <option value="9">ISO-8859-1.</option>
+      <option value="10">ISO-8859-15.</option>
+    </select>
+    <label style="margin-top:14px">Input.</label>
+    <textarea id="input" placeholder="Enter plaintext...">Base81 Encoder and Decoder by Lykke Månestrand.</textarea>
+    <div class="meta" id="inputMeta"></div>
+    <div class="row">
+      <button class="btn-primary" onclick="encode()">Encode.</button>
+      <button class="btn-secondary" onclick="decode()">Decode.</button>
+      <button class="btn-danger" onclick="clearText()">Clear.</button>
+    </div>
+    <div class="progress-wrap" id="textProgress">
+      <div class="progress-bar"><div id="textProgressBar"></div></div>
+      <p class="status" id="textStatus"></p>
+    </div>
+    <label style="margin-top:14px">Output.</label>
+    <textarea id="output" readonly></textarea>
+    <div class="row">
+      <button class="btn-secondary" onclick="copyOutput()">Copy.</button>
+      <button class="btn-secondary" onclick="saveOutputFile()">Save as .base81 format.</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>File Mode.</h2>
+    <div class="drop-zone" id="dropZone">
+      <strong>Drag and drop your files here.</strong>
+      <p>Or click to upload files.</p>
+      <input type="file" id="fileInput" hidden>
+    </div>
+    <div class="file-info" id="fileInfo"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn-primary" onclick="encodeFile()">Encode File.</button>
+      <button class="btn-secondary" onclick="decodeFile()">Decode File.</button>
+      <button class="btn-secondary" onclick="loadSampleJpg()">Test sample JPG.</button>
+      <button class="btn-secondary" id="downloadBtn" style="display:none" onclick="downloadFile()">Download.</button>
+    </div>
+    <div class="progress-wrap" id="fileProgress">
+      <div class="progress-bar"><div id="progressBar"></div></div>
+      <p class="status" id="fileStatus"></p>
+    </div>
+  </div>
+</div>
+<button class="gc-btn" id="gcBtn" title="Force garbage collection & clear workers.">🗑</button>
+<div class="toast" id="toast"></div>
+<script>
+const MAX_WORKERS = Math.min(Math.max(1, (navigator.hardwareConcurrency || 4) - 1), 9);
+const SAMPLE_JPG_BASE81 = `5,609,e1743b86
+94alOU80Ym:NbZ003Xmnh1U0pHMO00009KR02CRdp;17]MYA/000r?9610SkhbP2I0L5L31xS(z3?008ht900bu}3R+9PTX:;i0p9%R]A17+zF>99Ux41gK0]Mrh8V0wwgSp(151zu.w0TJ9ux50X#doPh9RltRHR01?6}9r00hg;8x0000d{y127ZE<P9JfAODW0yWtOV;0KJn:xT9E(C)j<2J2orD/0J(TUcl01SjmLg0Ws%;iC0E5FJy?0#J{*p92GAworw1sA:v>@0z^Lzra1hI:}*W1gmW{}k0V.6In}1Ve}Rm@9WEpEr<1)747RS1U@K{Du9pSNFO51*}kth@0U(b}bn03:mrCu0jI9+1z0Jy;bPg0VVFdkY9*A]<<q2l6LwaF1A5Lg;h03*ICRY2!nGont1C+FacD0G7)yol0jGFA:b0}/goz(1VPg<da2YtScp{9Al3rVS2u%czfj12+QT730SBei%!2t@a5D30@VI:iT24QqqNF2Vfwowt07w?Ajk1oY0S%L915z3j:9YeZ!M.9{{cW)H9%6}:3t1QysZ^P20c;{EA9.aXr+j9unU@d4016ualp1ZfVt%k2E0f)oe1L+X?v#9?Y/OtC2%cKUAd0y/PZmW2VRG?Kr9CA@:>01Tk@nJF09l<19w0Wcp2kb1(bp@:L2sTji^<1E%yj(B15;X5i59A/V?+N96tb4K598fSOaJ1)hgFVC9Uc7<r]1@.c4N)1Va//bN2zUx>k;2epLa.G0:EA%TA9}Hmk!j0MzV9/+0%JzP?E0>LVj/90Q8k9tj2jB!0@A2!^M1>I0NI9vv]0zT0etB9vw+F*N1@*3c4p00Qr6Ki0#*eFW~`;
+const GC_IDLE_MS = 10_000;
+const ALPHABET = "0192837465ZaYbXcWdVeUfTgShRiQjPkOlNmMnLoKpJqIrHsGtFuEvDwCxByAz/!?@>#<%.^:;*}({)]+[-\\=";
+const PAD = "~";
+
+const WIN1252_DECODE = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,8364,129,8218,402,8222,8230,8224,8225,710,8240,352,8249,338,141,381,143,144,8216,8217,8220,8221,8226,8211,8212,732,8482,353,8250,339,157,382,376,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255];
+
+const ISO885915_DECODE = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,8364,165,352,167,353,169,170,171,172,173,174,175,176,177,178,179,381,181,182,183,382,185,186,187,338,339,376,191,192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255];
+
+function buildReverseTable(decodeTable) {
+  const map = new Map();
+  for (let i = 0; i < decodeTable.length; i++) map.set(decodeTable[i], i);
+  return map;
+}
+
+const WIN1252_ENCODE = buildReverseTable(WIN1252_DECODE);
+const ISO88591_ENCODE = new Map();
+for (let i = 0; i < 256; i++) ISO88591_ENCODE.set(i, i);
+const ISO885915_ENCODE = buildReverseTable(ISO885915_DECODE);
+
+const ENCODINGS = {1:"utf8",2:"ascii",3:"utf16le",4:"utf32le",5:"binary",6:"utf16be",7:"utf32be",8:"win1252",9:"iso88591",10:"iso885915"};
+
+const SIGNATURES = [
+  [0,[0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A],'.png'],
+  [0,[0xFF,0xD8,0xFF],'.jpg'],
+  [0,[0x47,0x49,0x46,0x38,0x37,0x61],'.gif'],
+  [0,[0x47,0x49,0x46,0x38,0x39,0x61],'.gif'],
+  [0,[0x42,0x4D],'.bmp'],
+  [0,[0x49,0x49,0x2A,0x00],'.tiff'],
+  [0,[0x4D,0x4D,0x00,0x2A],'.tiff'],
+  [0,[0x00,0x00,0x01,0x00],'.ico'],
+  [0,[0x25,0x50,0x44,0x46],'.pdf'],
+  [0,[0x7B,0x5C,0x72,0x74,0x66],'.rtf'],
+  [0,[0x50,0x4B,0x05,0x06],'.zip'],
+  [0,[0x50,0x4B,0x07,0x08],'.zip'],
+  [0,[0x50,0x4B,0x03,0x04],'.zip'],
+  [0,[0x37,0x7A,0xBC,0xAF,0x27,0x1C],'.7z'],
+  [0,[0x52,0x61,0x72,0x21,0x1A,0x07,0x00],'.rar'],
+  [0,[0x52,0x61,0x72,0x21,0x1A,0x07,0x01,0x00],'.rar'],
+  [0,[0x1F,0x8B,0x08],'.gz'],
+  [0,[0x42,0x5A,0x68],'.bz2'],
+  [0,[0xFD,0x37,0x7A,0x58,0x5A,0x00],'.xz'],
+  [0,[0x28,0xB5,0x2F,0xFD],'.zst'],
+  [0,[0x4D,0x5A],'.exe'],
+  [0,[0x7F,0x45,0x4C,0x46],'.elf'],
+  [0,[0xFE,0xED,0xFA,0xCE],'.macho'],
+  [0,[0xFE,0xED,0xFA,0xCF],'.macho'],
+  [0,[0xCE,0xFA,0xED,0xFE],'.macho'],
+  [0,[0xCF,0xFA,0xED,0xFE],'.macho'],
+  [0,[0x00,0x61,0x73,0x6D],'.wasm'],
+  [0,[0x66,0x4C,0x61,0x43],'.flac'],
+  [0,[0x4F,0x67,0x67,0x53],'.ogg'],
+  [0,[0x4D,0x54,0x68,0x64],'.mid'],
+  [0,[0x49,0x44,0x33],'.mp3'],
+  [0,[0xFF,0xFB],'.mp3'],
+  [0,[0xFF,0xF3],'.mp3'],
+  [0,[0xFF,0xF2],'.mp3'],
+  [0,[0xFF,0xFA],'.mp3'],
+  [0,[0xFF,0xF1],'.aac'],
+  [0,[0xFF,0xF9],'.aac'],
+  [0,[0x1A,0x45,0xDF,0xA3],'.mkv'],
+  [0,[0x46,0x4C,0x56],'.flv'],
+  [0,[0x30,0x26,0xB2,0x75,0x8E,0x66,0xCF,0x11],'.asf'],
+  [0,[0x53,0x51,0x4C,0x69,0x74,0x65,0x20,0x66,0x6F,0x72,0x6D,0x61,0x74,0x20,0x33,0x00],'.sqlite']
+];
+const SORTED_SIGNATURES = [...SIGNATURES].sort((a,b) => b[1].length - a[1].length);
+const FTYP_BRANDS = {
+  heic:'.heic',heix:'.heic',heim:'.heic',heis:'.heic',mif1:'.heic',msf1:'.heic',
+  avif:'.avif',avis:'.avif',avio:'.avif',MA1A:'.avif',MA1B:'.avif',
+  'M4A ':'.m4a','M4B ':'.m4a','M4P ':'.m4a',
+  'qt  ':'.mov',
+  '3gp4':'.3gp','3gp5':'.3gp','3gp6':'.3gp','3g2a':'.3gp','3g2b':'.3gp','3g2c':'.3gp',
+  isom:'.mp4',iso2:'.mp4',iso3:'.mp4',iso4:'.mp4',iso5:'.mp4',iso6:'.mp4',
+  mp41:'.mp4',mp42:'.mp4',avc1:'.mp4',dash:'.mp4',msdh:'.mp4',mmp4:'.mp4'
+};
+
+function matchBytes(bytes, offset, sig) {
+  const len = sig.length;
+  if (bytes.length < offset + len) return false;
+  for (let i = 0; i < len; i++) if (bytes[offset+i] !== sig[i]) return false;
+  return true;
+}
+
+function detectFileType(bytes) {
+  if (bytes.length >= 12) {
+    if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+      const form = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+      if (form === 'WAVE') return '.wav';
+      if (form === 'AVI ') return '.avi';
+      if (form === 'WEBP') return '.webp';
+      return '.riff';
+    }
+  }
+  if (bytes.length >= 12) {
+    if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+      const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+      if (FTYP_BRANDS[brand]) return FTYP_BRANDS[brand];
+      if (brand.startsWith('3g')) return '.3gp';
+      if (brand.startsWith('qt')) return '.mov';
+      return '.mp4';
+    }
+  }
+  if (bytes.length >= 8) {
+    if (bytes[0] === 0xCA && bytes[1] === 0xFE && bytes[2] === 0xBA && bytes[3] === 0xBE) {
+      const n = ((bytes[4] << 24) >>> 0) | (bytes[5] << 16) | (bytes[6] << 8) | bytes[7];
+      return (n > 0 && n <= 40) ? '.macho' : '.class';
+    }
+  }
+  if (bytes.length >= 30 && bytes[0] === 0x50 && bytes[1] === 0x4B && (bytes[2] === 0x03 || bytes[2] === 0x05 || bytes[2] === 0x07) && bytes[3] === 0x04) {
+    const limit = Math.min(bytes.length, 65536);
+    let hasWord = false, hasXl = false, hasPpt = false;
+    let pos = 0;
+    while (pos + 30 < limit) {
+      if (bytes[pos] === 0x50 && bytes[pos + 1] === 0x4B && bytes[pos + 2] === 0x03 && bytes[pos + 3] === 0x04) {
+        const nameLen = bytes[pos + 26] | (bytes[pos + 27] << 8);
+        const extraLen = bytes[pos + 28] | (bytes[pos + 29] << 8);
+        const nameStart = pos + 30;
+        if (nameStart + nameLen > limit) break;
+        let name = '';
+        for (let i = 0; i < nameLen; i++) name += String.fromCharCode(bytes[nameStart + i]);
+        if (name.startsWith('word/')) hasWord = true;
+        else if (name.startsWith('xl/')) hasXl = true;
+        else if (name.startsWith('ppt/')) hasPpt = true;
+        if (hasWord || hasXl || hasPpt) break;
+        const compSize = (bytes[pos + 18] | (bytes[pos + 19] << 8) | (bytes[pos + 20] << 16) | (bytes[pos + 21] << 24)) >>> 0;
+        pos = nameStart + nameLen + extraLen + compSize;
+      } else {
+        pos++;
+      }
+    }
+    if (hasWord) return '.docx';
+    if (hasXl) return '.xlsx';
+    if (hasPpt) return '.pptx';
+    return '.zip';
+  }
+  for (const [offset, sig, ext] of SORTED_SIGNATURES) if (matchBytes(bytes, offset, sig)) return ext;
+  return '.bin';
+}
+
+const WORKER_CODE = `
+const ALPHABET = "0192837465ZaYbXcWdVeUfTgShRiQjPkOlNmMnLoKpJqIrHsGtFuEvDwCxByAz/!?@>#<%.^:;*}({)]+[-\\\\=";
+const PAD = "~";
+const REVERSE = new Uint8Array(128);
+for (let i = 0; i < ALPHABET.length; i++) REVERSE[ALPHABET.charCodeAt(i)] = i;
+
+function encodeBytes(bytes) {
+  const n = bytes.length;
+  const fullGroups = Math.floor(n / 5);
+  const rem = n % 5;
+  const totalGroups = fullGroups + (rem > 0 ? 1 : 0);
+  const out = new Uint8Array(totalGroups * 7);
+  let ci = 0;
+  for (let i = 0; i < fullGroups * 5; i += 5) {
+    let v = bytes[i] * 4294967296 + bytes[i+1] * 16777216 + bytes[i+2] * 65536 + bytes[i+3] * 256 + bytes[i+4];
+    for (let j = 6; j >= 0; j--) {
+      out[ci + j] = ALPHABET.charCodeAt(v % 81);
+      v = Math.floor(v / 81);
+    }
+    ci += 7;
+  }
+  if (rem > 0) {
+    let v = 0;
+    for (let i = fullGroups * 5; i < n; i++) v = v * 256 + bytes[i];
+    const needed = Math.ceil(rem * 8 / Math.log2(81));
+    const temp = new Uint8Array(needed);
+    for (let k = needed - 1; k >= 0; k--) {
+      temp[k] = ALPHABET.charCodeAt(v % 81);
+      v = Math.floor(v / 81);
+    }
+    for (let j = 0; j < 7; j++) out[ci + j] = j < needed ? temp[j] : 126;
+  }
+  return new TextDecoder().decode(out);
+}
+
+function decodeBytes(str, totalBytes) {
+  const result = new Uint8Array(totalBytes);
+  let ri = 0;
+  const groups = Math.floor(str.length / 7);
+  for (let g = 0; g < groups; g++) {
+    const start = g * 7;
+    let v = 0;
+    for (let j = 0; j < 7; j++) {
+      const c = str[start + j];
+      if (c === PAD) break;
+      v = v * 81 + REVERSE[c.charCodeAt(0)];
+    }
+    const isLast = g === groups - 1;
+    const bytesInGroup = isLast ? (totalBytes - ri) : 5;
+    for (let j = bytesInGroup - 1; j >= 0; j--) {
+      result[ri + j] = v & 0xFF;
+      v = Math.floor(v / 256);
+    }
+    ri += bytesInGroup;
+  }
+  return result;
+}
+
+self.onmessage = (e) => {
+  const {type, bytes, str, totalBytes} = e.data;
+  try {
+    if (type === 'encode') {
+      const result = encodeBytes(bytes);
+      self.postMessage({result});
+    } else if (type === 'decode') {
+      const result = decodeBytes(str, totalBytes);
+      self.postMessage({result}, [result.buffer]);
+    }
+  } catch(err) {
+    self.postMessage({error: err.message});
+  }
+};
+`;
+
+let workerPool = null;
+let workerBlobUrl = null;
+let gcTimer = null;
+let fileBuffer = null;
+let currentFileName = "";
+
+function getOptimalWorkers(byteLength) {
+  if (byteLength < 65536) return 1;
+  if (byteLength < 524288) return Math.min(2, MAX_WORKERS);
+  return MAX_WORKERS;
+}
+
+function getWorkerPool() {
+  if (workerPool) { resetGcTimer(); return workerPool; }
+  const blob = new Blob([WORKER_CODE], {type: 'application/javascript'});
+  workerBlobUrl = URL.createObjectURL(blob);
+  workerPool = Array.from({length: MAX_WORKERS}, () => new Worker(workerBlobUrl));
+  resetGcTimer();
+  return workerPool;
+}
+
+function runWorker(worker, msg, retries = 2) {
+  const msgCopy = msg.type === 'encode' && msg.bytes ? {...msg, bytes: msg.bytes.slice()} : msg;
+  return new Promise((resolve, reject) => {
+    let attempts = 0;
+    function attempt() {
+      attempts++;
+      worker.onmessage = (e) => {
+        if (e.data.error) {
+          if (attempts <= retries) attempt();
+          else reject(new Error(e.data.error));
+        } else {
+          resolve(e.data.result);
+        }
+      };
+      worker.onerror = (e) => {
+        if (attempts <= retries) attempt();
+        else reject(new Error(e.message));
+      };
+      if (msg.type === 'encode' && msgCopy.bytes?.buffer) {
+        worker.postMessage({...msgCopy, bytes: msgCopy.bytes.slice()}, [msgCopy.bytes.slice().buffer]);
+      } else {
+        worker.postMessage(msgCopy);
+      }
+    }
+    attempt();
+  });
+}
+
+function resetGcTimer() {
+  clearTimeout(gcTimer);
+  gcTimer = setTimeout(() => {
+    if (workerPool) {
+      workerPool.forEach(w => w.terminate());
+      workerPool = null;
+      URL.revokeObjectURL(workerBlobUrl);
+      workerBlobUrl = null;
+    }
+  }, GC_IDLE_MS);
+}
+
+function forceGC() {
+  if (workerPool) {
+    const count = workerPool.length;
+    workerPool.forEach(w => w.terminate());
+    workerPool = null;
+    if (workerBlobUrl) {
+      URL.revokeObjectURL(workerBlobUrl);
+      workerBlobUrl = null;
+    }
+    clearTimeout(gcTimer);
+    toast(`Cleared ${count} worker${count > 1 ? 's' : ''}.`);
+  } else {
+    toast('No workers to clear.');
+  }
+}
+
+function splitBytes(bytes, n) {
+  if (bytes.length === 0 || n <= 1) return [bytes];
+  const rawSize = Math.ceil(bytes.length / n);
+  const size = Math.ceil(rawSize / 5) * 5;
+  const chunks = [];
+  for (let i = 0; i < bytes.length; i += size) chunks.push(bytes.subarray(i, i + size));
+  return chunks;
+}
+
+function calculateChecksum(bytes) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) {
+    crc ^= bytes[i];
+    for (let j = 0; j < 8; j++) {
+      crc = (crc >>> 1) ^ (0xEDB88320 & -(crc & 1));
+    }
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+} // CRC32 is probably the best because this is not encrypter!
+
+async function parallelEncode(bytes, encId) {
+  const num = getOptimalWorkers(bytes.length);
+  const workers = getWorkerPool();
+  const chunks = splitBytes(bytes, num);
+  const results = await Promise.all(
+    chunks.map((chunk, i) => runWorker(workers[i], {type: 'encode', bytes: chunk}))
+  );
+  const checksum = calculateChecksum(bytes).toString(16);
+  return `${encId},${bytes.length},${checksum}\n` + results.join('\n');
+}
+
+async function parallelDecode(text) {
+  const lines = text.trim().split('\n');
+  const [encId, totalBytes, checksum] = lines[0].split(',');
+  const chunks = lines.slice(1).filter(l => l.length > 0);
+  const num = getOptimalWorkers(totalBytes);
+  const workers = getWorkerPool();
+  let bytesAccum = 0;
+  const chunkByteCounts = chunks.map((chunk, i) => {
+    if (i < chunks.length - 1) {
+      const b = (chunk.length / 7) * 5;
+      bytesAccum += b;
+      return b;
+    }
+    return totalBytes - bytesAccum;
+  });
+  const results = await Promise.all(
+    chunks.map((chunk, i) => runWorker(workers[i % num], {
+      type: 'decode',
+      str: chunk,
+      totalBytes: chunkByteCounts[i]
+    }))
+  );
+  const out = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const r of results) { 
+    out.set(r, offset); 
+    offset += r.length; 
+  }
+  const calculatedChecksum = calculateChecksum(out).toString(16);
+  if (calculatedChecksum !== checksum) throw new Error(`Checksum mismatch! Expected ${checksum}, got ${calculatedChecksum}`);
+  return {bytes: out, encId: parseInt(encId)};
+}
+
+function encodeWith1252(text) {
+  const arr = [];
+  for (const ch of text) {
+    const cp = ch.codePointAt(0);
+    const byte = WIN1252_ENCODE.get(cp);
+    arr.push(byte !== undefined ? byte : 63);
+  }
+  return new Uint8Array(arr);
+}
+
+function decodeWith1252(bytes) {
+  return [...bytes].map(b => String.fromCodePoint(WIN1252_DECODE[b])).join('');
+}
+
+function encodeWithISO88591(text) {
+  const arr = [];
+  for (const ch of text) {
+    const cp = ch.codePointAt(0);
+    arr.push(cp < 256 ? cp : 63);
+  }
+  return new Uint8Array(arr);
+}
+
+function decodeWithISO88591(bytes) {
+  return [...bytes].map(b => String.fromCodePoint(b)).join('');
+}
+
+function encodeWithISO885915(text) {
+  const arr = [];
+  for (const ch of text) {
+    const cp = ch.codePointAt(0);
+    const byte = ISO885915_ENCODE.get(cp);
+    arr.push(byte !== undefined ? byte : 63);
+  }
+  return new Uint8Array(arr);
+}
+
+function decodeWithISO885915(bytes) {
+  return [...bytes].map(b => String.fromCodePoint(ISO885915_DECODE[b])).join('');
+}
+
+function textToBytes(text, enc) {
+  switch(enc) {
+    case "utf8": return new TextEncoder().encode(text);
+    case "utf16le": {
+      const buf = new ArrayBuffer(text.length * 2);
+      const view = new DataView(buf);
+      for (let i = 0; i < text.length; i++) view.setUint16(i * 2, text.charCodeAt(i), true);
+      return new Uint8Array(buf);
+    }
+    case "utf16be": {
+      const buf = new ArrayBuffer(text.length * 2);
+      const view = new DataView(buf);
+      for (let i = 0; i < text.length; i++) view.setUint16(i * 2, text.charCodeAt(i), false);
+      return new Uint8Array(buf);
+    }
+    case "utf32le": {
+      const arr = [];
+      for (let i = 0; i < text.length; i++) {
+        const c = text.charCodeAt(i);
+        arr.push(c & 0xFF, (c >> 8) & 0xFF, 0, 0);
+      }
+      return new Uint8Array(arr);
+    }
+    case "utf32be": {
+      const arr = [];
+      for (let i = 0; i < text.length; i++) {
+        const c = text.charCodeAt(i);
+        arr.push(0, 0, (c >> 8) & 0xFF, c & 0xFF);
+      }
+      return new Uint8Array(arr);
+    }
+    case "ascii": return new Uint8Array([...text].map(c => c.charCodeAt(0) & 0x7F));
+    case "win1252": return encodeWith1252(text);
+    case "iso88591": return encodeWithISO88591(text);
+    case "iso885915": return encodeWithISO885915(text);
+    default: return new TextEncoder().encode(text);
+  }
+}
+
+function bytesToText(bytes, enc) {
+  switch(enc) {
+    case "utf8": return new TextDecoder().decode(bytes);
+    case "utf16le": {
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.length);
+      let s = '';
+      for (let i = 0; i + 1 < bytes.length; i += 2) s += String.fromCharCode(view.getUint16(i, true));
+      return s;
+    }
+    case "utf16be": {
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.length);
+      let s = '';
+      for (let i = 0; i + 1 < bytes.length; i += 2) s += String.fromCharCode(view.getUint16(i, false));
+      return s;
+    }
+    case "utf32le": {
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.length);
+      let t = '';
+      for (let i = 0; i + 3 < bytes.length; i += 4) t += String.fromCharCode(view.getUint32(i, true));
+      return t;
+    }
+    case "utf32be": {
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.length);
+      let t = '';
+      for (let i = 0; i + 3 < bytes.length; i += 4) t += String.fromCharCode(view.getUint32(i, false));
+      return t;
+    }
+    case "ascii": return [...bytes].map(b => String.fromCharCode(b & 0x7F)).join('');
+    case "win1252": return decodeWith1252(bytes);
+    case "iso88591": return decodeWithISO88591(bytes);
+    case "iso885915": return decodeWithISO885915(bytes);
+    default: return new TextDecoder().decode(bytes);
+  }
+}
+
+function timestampName(ext) {
+  const d = new Date(), p = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}${ext}`;
+}
+
+function showProgress(wrapId, barId, pct, show) {
+  const wrap = document.getElementById(wrapId);
+  const bar = document.getElementById(barId);
+  wrap.style.display = show ? "block" : "none";
+  bar.style.width = pct + "%";
+}
+
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+function updateInputMeta() {
+  const val = document.getElementById("input").value;
+  document.getElementById("inputMeta").textContent = val ? `${val.length} characters.` : "";
+}
+
+async function encode() {
+  const encId = parseInt(document.getElementById("encoding").value);
+  const bytes = textToBytes(document.getElementById("input").value, ENCODINGS[encId]);
+  showProgress("textProgress", "textProgressBar", 40, true);
+  try {
+    document.getElementById("output").value = await parallelEncode(bytes, encId);
+    document.getElementById("textStatus").textContent = `Encoded ${bytes.length} bytes`;
+    showProgress("textProgress", "textProgressBar", 100, true);
+    setTimeout(() => showProgress("textProgress", "textProgressBar", 0, false), 600);
+  } catch (e) {
+    toast("Error: " + e.message);
+    showProgress("textProgress", "textProgressBar", 0, false);
+  }
+}
+
+async function decode() {
+  const text = document.getElementById("input").value.trim();
+  if (!text) { toast("Nothing to decode."); return; }
+  showProgress("textProgress", "textProgressBar", 40, true);
+  try {
+    const {bytes, encId} = await parallelDecode(text);
+    const encName = ENCODINGS[encId];
+    document.getElementById("output").value = (!encName || encName === "binary")
+      ? "[Binary data detected! Please check input or use File Mode.]"
+      : bytesToText(bytes, encName);
+    document.getElementById("textStatus").textContent = `Decoded ${bytes.length} bytes`;
+    showProgress("textProgress", "textProgressBar", 100, true);
+    setTimeout(() => showProgress("textProgress", "textProgressBar", 0, false), 600);
+  } catch (e) {
+    toast("Error: " + e.message);
+    showProgress("textProgress", "textProgressBar", 0, false);
+  }
+}
+
+function clearText() {
+  document.getElementById("input").value = "";
+  document.getElementById("output").value = "";
+  document.getElementById("inputMeta").textContent = "";
+  document.getElementById("textStatus").textContent = "";
+}
+
+function copyOutput() {
+  const out = document.getElementById("output").value;
+  if (!out) { toast("Nothing to copy."); return; }
+  navigator.clipboard.writeText(out).then(() => toast("Copied.")).catch(() => toast("Copy failed."));
+}
+
+function saveOutputFile() {
+  const out = document.getElementById("output").value;
+  if (!out) { toast("Nothing to save."); return; }
+  const a = Object.assign(document.createElement("a"), {
+    href: URL.createObjectURL(new Blob([out])),
+    download: timestampName(".base81")
+  });
+  a.click();
+}
+
+function handleFileSelect(file) {
+  if (!file) return;
+  currentFileName = file.name;
+  document.getElementById("fileInfo").textContent = `${file.name} (${formatFileSize(file.size)}).`;
+  document.getElementById("downloadBtn").style.display = "none";
+}
+
+async function encodeFile() {
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) { toast("Please select a file to encode!"); return; }
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  showProgress("fileProgress", "progressBar", 40, true);
+  document.getElementById("downloadBtn").style.display = "none";
+  try {
+    fileBuffer = await parallelEncode(bytes, 5);
+    document.getElementById("fileStatus").textContent = `Encoded: ${file.name} (${bytes.length} bytes)`;
+    document.getElementById("downloadBtn").dataset.ext = ".base81";
+    document.getElementById("downloadBtn").style.display = "inline-block";
+    showProgress("fileProgress", "progressBar", 100, true);
+    setTimeout(() => showProgress("fileProgress", "progressBar", 0, false), 600);
+  } catch (e) {
+    toast("Error: " + e.message);
+    showProgress("fileProgress", "progressBar", 0, false);
+  }
+}
+
+async function decodeFile() {
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) { toast("Please select a file to decode!"); return; }
+  showProgress("fileProgress", "progressBar", 40, true);
+  document.getElementById("downloadBtn").style.display = "none";
+  try {
+    const {bytes} = await parallelDecode(new TextDecoder().decode(await file.arrayBuffer()));
+    fileBuffer = bytes;
+    const ext = detectFileType(bytes);
+    document.getElementById("fileStatus").textContent = `Decoded: ${file.name} (${bytes.length} bytes) → ${ext}`;
+    document.getElementById("downloadBtn").dataset.ext = ext;
+    document.getElementById("downloadBtn").style.display = "inline-block";
+    showProgress("fileProgress", "progressBar", 100, true);
+    setTimeout(() => showProgress("fileProgress", "progressBar", 0, false), 600);
+  } catch (e) {
+    toast("Error: " + e.message);
+    showProgress("fileProgress", "progressBar", 0, false);
+  }
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return "0 B";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+}
+
+function downloadFile() {
+  if (!fileBuffer) { toast("No data to download!"); return; }
+  const ext = document.getElementById("downloadBtn").dataset.ext || ".bin";
+  const a = Object.assign(document.createElement("a"), {
+    href: URL.createObjectURL(new Blob([fileBuffer])),
+    download: timestampName(ext)
+  });
+  a.click();
+}
+
+async function loadSampleJpg() {
+  const sampleText = SAMPLE_JPG_BASE81;
+  showProgress("fileProgress", "progressBar", 30, true);
+  document.getElementById("downloadBtn").style.display = "none";
+  document.getElementById("fileInfo").textContent = "sample.jpg (encoded) – 609 B.";
+  try {
+    const { bytes } = await parallelDecode(sampleText);
+    fileBuffer = bytes;
+    const ext = detectFileType(bytes);
+    document.getElementById("fileStatus").textContent = `Decoded sample: ${bytes.length} bytes (${ext})`;
+    document.getElementById("downloadBtn").dataset.ext = ext;
+    document.getElementById("downloadBtn").style.display = "inline-block";
+    showProgress("fileProgress", "progressBar", 100, true);
+    setTimeout(() => showProgress("fileProgress", "progressBar", 0, false), 600);
+    if (confirm("Decode sample finished (.jpg).\nWould you like to download it?")) {
+      downloadFile();
+    }
+  } catch (e) {
+    toast("Error: " + e.message);
+    showProgress("fileProgress", "progressBar", 0, false);
+  }
+}
+
+document.getElementById("input").addEventListener("input", updateInputMeta);
+document.getElementById("input").addEventListener("keydown", e => {
+  if (e.ctrlKey && e.key === "Enter") encode();
+});
+
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("fileInput");
+
+dropZone.addEventListener("click", () => fileInput.click());
+dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("dragover"); });
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+dropZone.addEventListener("drop", e => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+  if (e.dataTransfer.files.length) {
+    fileInput.files = e.dataTransfer.files;
+    handleFileSelect(e.dataTransfer.files[0]);
+  }
+});
+
+fileInput.addEventListener("change", () => handleFileSelect(fileInput.files[0]));
+document.getElementById("themeBtn").addEventListener("click", () => {
+  const html = document.documentElement;
+  const next = html.getAttribute("data-theme") === "light" ? "" : "light";
+  html.setAttribute("data-theme", next);
+  document.getElementById("themeBtn").textContent = next === "light" ? "☀" : "☾";
+});
+
+document.getElementById("gcBtn").addEventListener("click", forceGC);
+
+let isDraggingGC = false;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+
+const gcBtn = document.getElementById("gcBtn");
+
+gcBtn.addEventListener("mousedown", (e) => {
+  isDraggingGC = true;
+  gcBtn.classList.add("dragging");
+  const rect = gcBtn.getBoundingClientRect();
+  dragOffsetX = e.clientX - rect.left;
+  dragOffsetY = e.clientY - rect.top;
+  gcBtn.style.cursor = "grabbing";
+  gcBtn.style.transition = "none";
+});
+
+document.addEventListener("mousemove", (e) => {
+  if (!isDraggingGC) return;
+  const x = e.clientX - dragOffsetX;
+  const y = e.clientY - dragOffsetY;
+  gcBtn.style.bottom = "auto";
+  gcBtn.style.right = "auto";
+  gcBtn.style.left = x + "px";
+  gcBtn.style.top = y + "px";
+});
+
+document.addEventListener("mouseup", () => {
+  if (isDraggingGC) {
+    isDraggingGC = false;
+    gcBtn.classList.remove("dragging");
+    gcBtn.style.cursor = "grab";
+    gcBtn.style.transition = "0.2s";
+  }
+});
+</script>
+</body>
+</html>

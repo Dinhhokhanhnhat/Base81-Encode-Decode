@@ -1,0 +1,6 @@
+These scans are informational only. A clean scan does not guarantee that the software is completely safe, secure, or free from vulnerabilities.
+
+https://www.virustotal.com/gui/url/694f7db7d114606c6968f8e318581f6459a38ef4d315316ea3795793f37dde19/gti-summary
+https://radar.cloudflare.com/scan/1a7789eb-4364-4008-9288-8a78a079e43f/summary
+https://transparencyreport.google.com/safe-browsing/search?url=https:%2F%2Fdinhhokhanhnhat.github.io%2FBase81-Encode-Decode%2F
+https://www.urlvoid.com/scan/dinhhokhanhnhat.github.io/

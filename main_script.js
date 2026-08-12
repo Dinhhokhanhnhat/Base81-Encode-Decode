@@ -312,15 +312,13 @@ async function parallelEncode(bytes, encId) {
   const num = getOptimalWorkers(bytes.length);
   const workers = getWorkerPool();
   const chunks = splitBytes(bytes, num);
-  const results = await Promise.all(
-    chunks.map((chunk, i) => runWorker(workers[i], {type: 'encode', bytes: chunk}))
-  );
-  return `${encId},${bytes.length},${checksum}\n` + results.join('\n');
+  const results = await Promise.all(chunks.map((chunk, i) => runWorker(workers[i], {type: 'encode', bytes: chunk})));
+  return `${encId},${bytes.length}\n` + results.join('\n');
 }
 
 async function parallelDecode(text) {
   const lines = text.trim().split('\n');
-  const [encId, totalBytes, checksum] = lines[0].split(',');
+  const [encId, totalBytes] = lines[0].split(',');
   const chunks = lines.slice(1).filter(l => l.length > 0);
   const num = getOptimalWorkers(totalBytes);
   const workers = getWorkerPool();

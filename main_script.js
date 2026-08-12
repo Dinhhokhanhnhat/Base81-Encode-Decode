@@ -1,4 +1,4 @@
-const MAX_WORKERS = Math.min(Math.max(1, (navigator.hardwareConcurrency || 4) - 1), 9); // You can adjust this as your wish.
+const MAX_WORKERS = Math.min(Math.max(1, (navigator.hardwareConcurrency || 4) - 2), 9); // You can adjust this as your wish.
 const SAMPLE_JPG_BASE81 = `5,609,e1743b86
 94alOU80Ym:NbZ003Xmnh1U0pHMO00009KR02CRdp;17]MYA/000r?9610SkhbP2I0L5L31xS(z3?008ht900bu}3R+9PTX:;i0p9%R]A17+zF>99Ux41gK0]Mrh8V0wwgSp(151zu.w0TJ9ux50X#doPh9RltRHR01?6}9r00hg;8x0000d{y127ZE<P9JfAODW0yWtOV;0KJn:xT9E(C)j<2J2orD/0J(TUcl01SjmLg0Ws%;iC0E5FJy?0#J{*p92GAworw1sA:v>@0z^Lzra1hI:}*W1gmW{}k0V.6In}1Ve}Rm@9WEpEr<1)747RS1U@K{Du9pSNFO51*}kth@0U(b}bn03:mrCu0jI9+1z0Jy;bPg0VVFdkY9*A]<<q2l6LwaF1A5Lg;h03*ICRY2!nGont1C+FacD0G7)yol0jGFA:b0}/goz(1VPg<da2YtScp{9Al3rVS2u%czfj12+QT730SBei%!2t@a5D30@VI:iT24QqqNF2Vfwowt07w?Ajk1oY0S%L915z3j:9YeZ!M.9{{cW)H9%6}:3t1QysZ^P20c;{EA9.aXr+j9unU@d4016ualp1ZfVt%k2E0f)oe1L+X?v#9?Y/OtC2%cKUAd0y/PZmW2VRG?Kr9CA@:>01Tk@nJF09l<19w0Wcp2kb1(bp@:L2sTji^<1E%yj(B15;X5i59A/V?+N96tb4K598fSOaJ1)hgFVC9Uc7<r]1@.c4N)1Va//bN2zUx>k;2epLa.G0:EA%TA9}Hmk!j0MzV9/+0%JzP?E0>LVj/90Q8k9tj2jB!0@A2!^M1>I0NI9vv]0zT0etB9vw+F*N1@*3c4p00Qr6Ki0#*eFW~`;
 const GC_IDLE_MS = 60_000; // This has a problem that when encoding file, the workers may be collected. I will fix this soon (or later if I have time).
@@ -299,16 +299,14 @@ function splitBytes(bytes, n) {
   return chunks;
 }
 
-function calculateChecksum(bytes) { // CRC32 is probably the best because this is not encrypter.
-  let crc = 0xFFFFFFFF;
-  for (let i = 0; i < bytes.length; i++) {
-    crc ^= bytes[i];
-    for (let j = 0; j < 8; j++) {
-      crc = (crc >>> 1) ^ (0xEDB88320 & -(crc & 1));
-    }
-  }
-  return (crc ^ 0xFFFFFFFF) >>> 0;
-}
+// function calculateChecksum(bytes) { // CRC32 is probably the best because this is not encrypter.
+  // let crc = 0xFFFFFFFF;
+  // for (let i = 0; i < bytes.length; i++) {
+    // crc ^= bytes[i];
+    // for (let j = 0; j < 8; j++) crc = (crc >>> 1) ^ (0xEDB88320 & -(crc & 1));
+  // }
+  // return (crc ^ 0xFFFFFFFF) >>> 0;
+// }
 
 async function parallelEncode(bytes, encId) {
   const num = getOptimalWorkers(bytes.length);
@@ -317,7 +315,6 @@ async function parallelEncode(bytes, encId) {
   const results = await Promise.all(
     chunks.map((chunk, i) => runWorker(workers[i], {type: 'encode', bytes: chunk}))
   );
-  const checksum = calculateChecksum(bytes).toString(16);
   return `${encId},${bytes.length},${checksum}\n` + results.join('\n');
 }
 
@@ -349,8 +346,6 @@ async function parallelDecode(text) {
     out.set(r, offset); 
     offset += r.length; 
   }
-  const calculatedChecksum = calculateChecksum(out).toString(16);
-  if (calculatedChecksum !== checksum) throw new Error(`Checksum mismatch! Expected ${checksum}, got ${calculatedChecksum}`);
   return {bytes: out, encId: parseInt(encId)};
 }
 

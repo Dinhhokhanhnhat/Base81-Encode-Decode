@@ -4,6 +4,7 @@ https://www.virustotal.com/gui/url/694f7db7d114606c6968f8e318581f6459a38ef4d3153
 https://radar.cloudflare.com/scan/1a7789eb-4364-4008-9288-8a78a079e43f/summary
 https://transparencyreport.google.com/safe-browsing/search?url=https:%2F%2Fdinhhokhanhnhat.github.io%2FBase81-Encode-Decode%2F
 https://www.urlvoid.com/scan/dinhhokhanhnhat.github.io/
+https://sitecheck.sucuri.net/results/https/dinhhokhanhnhat.github.io/Base81-Encode-Decode/
 
 The application runs entirely in your browser. No data is sent to a server by the application itself.
-The source code is publicly available for independent review!
+The source code is publicly available for independent review.

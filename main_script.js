@@ -4,6 +4,7 @@ const SAMPLE_JPG_BASE81 = `5,609,e1743b86
 const GC_IDLE_MS = 60_000; // This has a problem that when encoding file, the workers may be collected. I will fix this soon (or later if I have time).
 const ALPHABET = "0192837465ZaYbXcWdVeUfTgShRiQjPkOlNmMnLoKpJqIrHsGtFuEvDwCxByAz/!?@>#<%.^:;*}({)]+[-\\=";
 const PAD = "~"; // Padding, like "=" in Base64.
+let isProcessing = false;
 
 const WIN1252_DECODE = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,8364,129,8218,402,8222,8230,8224,8225,710,8240,352,8249,338,141,381,143,144,8216,8217,8220,8221,8226,8211,8212,732,8482,353,8250,339,157,382,376,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255];
 
@@ -225,7 +226,7 @@ function getOptimalWorkers(byteLength) {
   return MAX_WORKERS;
 }
 
-function getWorkerPool() { // Only use JavaScript, no Web Assembly. I will update in the future.
+function getWorkerPool() {
   if (workerPool) { resetGcTimer(); return workerPool; }
   const blob = new Blob([WORKER_CODE], {type: 'application/javascript'});
   workerBlobUrl = URL.createObjectURL(blob);
@@ -264,6 +265,7 @@ function runWorker(worker, msg, retries = 2) {
 
 function resetGcTimer() {
   clearTimeout(gcTimer);
+  if (isProcessing) return; // If we are processing, GC MUST NOT trigger.
   gcTimer = setTimeout(() => {
     if (workerPool) {
       workerPool.forEach(w => w.terminate());
@@ -299,7 +301,7 @@ function splitBytes(bytes, n) {
   return chunks;
 }
 
-// function calculateChecksum(bytes) { // CRC32 is probably the best because this is not encrypter.
+// function calculateChecksum(bytes) { // Should we continue using CRC32 or not?
   // let crc = 0xFFFFFFFF;
   // for (let i = 0; i < bytes.length; i++) {
     // crc ^= bytes[i];
@@ -309,42 +311,53 @@ function splitBytes(bytes, n) {
 // }
 
 async function parallelEncode(bytes, encId) {
-  const num = getOptimalWorkers(bytes.length);
-  const workers = getWorkerPool();
-  const chunks = splitBytes(bytes, num);
-  const results = await Promise.all(chunks.map((chunk, i) => runWorker(workers[i], {type: 'encode', bytes: chunk})));
-  return `${encId},${bytes.length}\n` + results.join('\n');
+  try {
+    const num = getOptimalWorkers(bytes.length);
+    const workers = getWorkerPool();
+    const chunks = splitBytes(bytes, num);
+    const results = await Promise.all(chunks.map((chunk, i) => runWorker(workers[i], {type: 'encode', bytes: chunk})));
+    return `${encId},${bytes.length}\n` + results.join('\n');
+  } finally {
+    isProcessing = false;
+    resetGcTimer();
+  }
 }
 
 async function parallelDecode(text) {
-  const lines = text.trim().split('\n');
-  const [encId, totalBytes] = lines[0].split(',');
-  const chunks = lines.slice(1).filter(l => l.length > 0);
-  const num = getOptimalWorkers(totalBytes);
-  const workers = getWorkerPool();
-  let bytesAccum = 0;
-  const chunkByteCounts = chunks.map((chunk, i) => {
-    if (i < chunks.length - 1) {
-      const b = (chunk.length / 7) * 5;
-      bytesAccum += b;
-      return b;
+  isProcessing = true;
+  try {
+    const lines = text.trim().split('\n');
+    const [encId, totalBytes] = lines[0].split(',');
+    const chunks = lines.slice(1).filter(l => l.length > 0);
+    const num = getOptimalWorkers(totalBytes);
+    const workers = getWorkerPool();
+    let bytesAccum = 0;
+    const chunkByteCounts = chunks.map((chunk, i) => {
+      if (i < chunks.length - 1) {
+        const b = (chunk.length / 7) * 5;
+        bytesAccum += b;
+        return b;
+      }
+      return totalBytes - bytesAccum;
+    });
+    const results = await Promise.all(
+      chunks.map((chunk, i) => runWorker(workers[i % num], {
+        type: 'decode',
+        str: chunk,
+        totalBytes: chunkByteCounts[i]
+      }))
+    );
+    const out = new Uint8Array(totalBytes);
+    let offset = 0;
+    for (const r of results) { 
+      out.set(r, offset); 
+      offset += r.length; 
     }
-    return totalBytes - bytesAccum;
-  });
-  const results = await Promise.all(
-    chunks.map((chunk, i) => runWorker(workers[i % num], {
-      type: 'decode',
-      str: chunk,
-      totalBytes: chunkByteCounts[i]
-    }))
-  );
-  const out = new Uint8Array(totalBytes);
-  let offset = 0;
-  for (const r of results) { 
-    out.set(r, offset); 
-    offset += r.length; 
+    return {bytes: out, encId: parseInt(encId)};
+  } finally {
+    isProcessing = false;
+    resetGcTimer();
   }
-  return {bytes: out, encId: parseInt(encId)};
 }
 
 function encodeWith1252(text) {
